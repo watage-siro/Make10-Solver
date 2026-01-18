@@ -1,1 +1,21 @@
+name: make10-run
 
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          g++ -O2 -std=c++17 main.cpp -o make10
+
+      - name: Run
+        run: |
+          ./make10

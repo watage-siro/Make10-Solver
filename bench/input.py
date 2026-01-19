@@ -1,7 +1,7 @@
 import random
 from pathlib import Path
 
-rondom.seed(114514)
+random.seed(114514)
 Path("bench/inputs").mkdir(parents=True, exist_ok=True)
 
 n = 6

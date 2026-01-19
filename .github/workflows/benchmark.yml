@@ -1,6 +1,7 @@
 name: Benchmark Make10
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -8,35 +9,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Generate inputs
+      - name: Install dependencies
         run: |
-          python3 input.py
+          sudo apt-get update
+          sudo apt-get install -y g++
 
       - name: Build
         run: |
-          g++ -O2 -std=c++17 -o make10 main.cpp
+          g++ -O2 -std=gnu++20 main.cpp -o make10
+
+      - name: Generate inputs
+        run: |
+          mkdir -p inputs
+          python3 input.py
 
       - name: Run benchmark
         run: |
           echo "n,nums,call,opc,eval,time" > results.csv
-
           for f in inputs/*.txt; do
-            base=$(basename "$f" .txt)
-
-            # 例: 6(1,2,3,4,5,6)
-            n=${base%%(*}
-            nums=${base#*(}
-            nums=${nums%)}
-
-            echo -n "${n},\"${nums}\"," >> results.csv
-            ./make10 < "$f" >> results.csv
+            nums=$(tr '\n' ' ' < "$f")
+            n=$(echo "$nums" | awk '{print $1}')
+            list=$(echo "$nums" | awk '{for(i=2;i<=NF;i++) printf (i==2?"%s":",%s"), $i}')
+            out=$(echo "$nums" | ./make10)
+            echo "$n,\"($list)\",$out" >> results.csv
           done
 
       - name: Upload results

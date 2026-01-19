@@ -4,7 +4,7 @@ from pathlib import Path
 Path("bench/inputs").mkdir(parents=True, exist_ok=True)
 
 n = 6
-data_siza = 1
+data_size = 1
 
 for _ in range(data_size):
     nums = [random.randint(1, 9) for _ in range(n)]

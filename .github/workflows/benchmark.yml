@@ -1,66 +1,37 @@
-name: Benchmark Make10 (all metrics)
+name: benchmark
 
 on:
   workflow_dispatch:
 
 jobs:
-  benchmark:
+  bench:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
+      - name: Build
+        run: |
+          g++ -std=c++17 -O2 -pipe -static -s -o main main.cpp
 
-    - name: Generate inputs
-      run: |
-        python3 bench/input.py
+      - name: Run benchmarks
+        run: |
+          echo "n,nums,call,opc,eval,time" > results.csv
 
-    - name: Build
-      run: |
-        g++ -O2 -std=gnu++17 -o make10 main.cpp
+          for f in inputs/*.txt; do
+            base=$(basename "$f" .txt)
 
-    - name: Run benchmark on generated inputs
-      run: |
-        mkdir -p bench/results
-        echo "input,n,nums,run1_calls,run1_ops,run1_evals,run1_time,run2_calls,run2_ops,run2_evals,run2_time,run3_calls,run3_ops,run3_evals,run3_time,run4_calls,run4_ops,run4_evals,run4_time,run5_calls,run5_ops,run5_evals,run5_time,avg_calls,avg_ops,avg_evals,avg_time,min_time,max_time" > bench/results/results.csv
+            # 例: 6(1,2,3,4,5,6)
+            n=${base%%(*}
+            nums=${base#*(}
+            nums=${nums%)}
 
-        for input in bench/inputs/*.txt; do
-          base=$(basename "$input" .txt)
-
-          # base 例: 6(1,2,3,4,5,6)
-          n=${base%%(*}
-          content=${base#*(}
-          content=${content%)}
-
-          calls=()
-          ops=()
-          evals=()
-          times=()
-
-          for i in $(seq 1 1); do
-            out=$(./make10 < "$input")
-            c=$(echo "$out" | awk '{print $1}')
-            o=$(echo "$out" | awk '{print $2}')
-            e=$(echo "$out" | awk '{print $3}')
-            t=$(echo "$out" | awk '{print $4}')
-            calls+=($c)
-            ops+=($o)
-            evals+=($e)
-            times+=($t)
+            echo -n "${n},\"${nums}\"," >> results.csv
+            ./main < "$f" >> results.csv
           done
 
-          python3 bench/compute.py "${calls[@]}" "${ops[@]}" "${evals[@]}" "${times[@]}" > bench/results/tmp.txt
-          line=$(tail -n 1 bench/results/tmp.txt)
-
-          echo "$base,$n,\"$content\",$line" >> bench/results/results.csv
-        done
-
-    - name: Upload results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results
-        path: bench/results/results.csv
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: results.csv

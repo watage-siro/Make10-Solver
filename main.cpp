@@ -10,8 +10,9 @@ int main(void) {
     // Runs in seconds up to n = 6.
     
     //-----------------------------------------
-    std::vector<int> nums = {1,2,3,4,5,6};
-    int target = 10;
+    int n; cin >> n;
+	std::vector<int> nums(n);
+	for(auto& a: nums) cin >> a;
     //-----------------------------------------
 
     auto start = std::chrono::high_resolution_clock::now();

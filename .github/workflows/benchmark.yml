@@ -24,7 +24,7 @@ jobs:
       - name: Generate inputs
         run: |
           mkdir -p inputs
-          python3 input.py
+          python3 bench/input.py
 
       - name: Run benchmark
         run: |

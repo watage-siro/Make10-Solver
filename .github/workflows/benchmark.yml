@@ -1,7 +1,6 @@
 name: Benchmark Make10
 
 on:
-  push:
   workflow_dispatch:
 
 jobs:

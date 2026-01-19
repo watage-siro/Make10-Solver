@@ -189,7 +189,7 @@ private:
 
     std::vector<int> A;
     std::vector<op> ops;
-
+    bool bench;
     frac calc(const frac& a, const frac& b, const op& o) {
         switch (o.name) {
             case tkn::ADD: return a + b;
@@ -224,7 +224,9 @@ private:
                    std::unordered_set<StateKey, StateKey::Hasher>& seen,
                    Emit&& emit,
                    int rpn_i = 0, int val_i = 0) {
+        if(bench) ++call;
         if (rpn_i == (int)rpn.size()) {
+            if(bench) ++eval;
             if (val_st.size() == 1 && val_st.back() == target) {
                 if (seen.insert(StateKey(fml_st.back())).second) {
                     emit(fml_st.back());
@@ -249,6 +251,7 @@ private:
             for (const op& o : ops) {
                 if ((o.name == tkn::ADD || o.name == tkn::MUL) && a > b) continue;
                 frac c = calc(a, b, o);
+                if(bench) ++opc;
                 if (!c.valid) continue;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);
@@ -293,7 +296,7 @@ private:
 }
 
 public:
-    explicit Make10(const std::vector<int>& vec) : A(vec) {
+    explicit Make10(const std::vector<int>& vec) : A(vec) : bench(false) {
         ops = { {tkn::ADD}, {tkn::SUB}, {tkn::MUL}, {tkn::DIV} };
     }
 
@@ -306,5 +309,12 @@ public:
         });
         res.erase(std::unique(res.begin(), res.end()), res.end());
         return res;
+    }
+
+    std::vector<int> benchmark(int x = 10) {
+        int call = 0,opc = 0,eval = 0;
+        bench = true;
+        solve(x);
+        std::vector<int> res = {call, opc, eval};
     }
 };

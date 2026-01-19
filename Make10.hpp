@@ -190,6 +190,8 @@ private:
     std::vector<int> A;
     std::vector<op> ops;
     bool bench;
+    long long call, opc, eval;
+
     frac calc(const frac& a, const frac& b, const op& o) {
         switch (o.name) {
             case tkn::ADD: return a + b;
@@ -296,7 +298,7 @@ private:
 }
 
 public:
-    explicit Make10(const std::vector<int>& vec) : A(vec) : bench(false) {
+    explicit Make10(const std::vector<int>& vec) : A(vec) , bench(false) {
         ops = { {tkn::ADD}, {tkn::SUB}, {tkn::MUL}, {tkn::DIV} };
     }
 
@@ -312,9 +314,11 @@ public:
     }
 
     std::vector<int> benchmark(int x = 10) {
-        int call = 0,opc = 0,eval = 0;
+        call = 0,opc = 0,eval = 0;
         bench = true;
         solve(x);
+        bench = false;
         std::vector<int> res = {call, opc, eval};
+        return res;
     }
 };

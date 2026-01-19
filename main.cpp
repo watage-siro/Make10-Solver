@@ -17,21 +17,12 @@ int main(void) {
 
     auto start = std::chrono::high_resolution_clock::now();
 	
-    auto res = Make10(nums).solve(target);
+    auto res = Make10(nums).benchmark(target);
     
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
+	for(auto& a : res) cout << a << " ";
     std::cout << std::fixed << std::setprecision(3);
-    std::cout << "Run Time:" << elapsed.count() << "s\n";
-    
-    std::cout << "Total Solution: " << res.size() << "\n";
-    
-    std::cout << "First 100 solutions:\n";
-    int display = std::min(100,(int)res.size());
-    for(int i = 0; i < display; ++i) {
-        std::cout << i + 1 << ": ";
-        std::cout << res[i] << " = " << target << "\n";
-    }
-    if(res.size() > 100) std::cout << "..." << "\n";
+    std::cout << elapsed.count() << "\n";
     return 0;
 }

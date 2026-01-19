@@ -22,18 +22,19 @@ jobs:
 
       - name: Generate inputs
         run: |
-          mkdir -p inputs
           python3 bench/input.py
 
       - name: Run benchmark
         run: |
           echo "n,nums,call,opc,eval,time" > results.csv
           for f in bench/inputs/*.txt; do
-            nums=$(tr '\n' ' ' < "$f")
-            n=$(echo "$nums" | awk '{print $1}')
-            list=$(echo "$nums" | awk '{for(i=2;i<=NF;i++) printf (i==2?"%s":",%s"), $i}')
-            out=$(echo "$nums" | ./make10)
-            echo "$n,\"($list)\",$out" >> results.csv
+            if [ -e "$f" ]; then
+              nums=$(tr '\n' ' ' < "$f")
+              n=$(echo "$nums" | awk '{print $1}')
+              list=$(echo "$nums" | awk '{for(i=2;i<=NF;i++) printf (i==2?"%s":",%s"), $i}')
+              out=$(echo "$nums" | ./make10)
+              echo "$n,\"($list)\",$out" >> results.csv
+            fi
           done
 
       - name: Upload results

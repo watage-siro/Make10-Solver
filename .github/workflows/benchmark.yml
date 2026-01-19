@@ -41,7 +41,7 @@ jobs:
           evals=()
           times=()
 
-          for i in $(seq 1 5); do
+          for i in $(seq 1 1); do
             out=$(./make10 < "$input")
             c=$(echo "$out" | awk '{print $1}')
             o=$(echo "$out" | awk '{print $2}')

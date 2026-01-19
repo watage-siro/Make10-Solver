@@ -1,20 +1,29 @@
-name: benchmark
+name: Benchmark Make10
 
 on:
   workflow_dispatch:
 
 jobs:
-  bench:
+  benchmark:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate inputs
+        run: |
+          python3 input.py
+
       - name: Build
         run: |
-          g++ -std=c++17 -O2 -pipe -static -s -o main main.cpp
+          g++ -O2 -std=c++17 -o make10 main.cpp
 
-      - name: Run benchmarks
+      - name: Run benchmark
         run: |
           echo "n,nums,call,opc,eval,time" > results.csv
 
@@ -27,7 +36,7 @@ jobs:
             nums=${nums%)}
 
             echo -n "${n},\"${nums}\"," >> results.csv
-            ./main < "$f" >> results.csv
+            ./make10 < "$f" >> results.csv
           done
 
       - name: Upload results

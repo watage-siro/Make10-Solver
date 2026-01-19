@@ -2,14 +2,25 @@ import random
 from pathlib import Path
 
 random.seed(114514)
-Path("bench/inputs").mkdir(parents=True, exist_ok=True)
 
-n = 6
-data_size = 1
+input_dir = Path("bench/inputs")
+input_dir.mkdir(parents=True, exist_ok=True)
 
-for _ in range(data_size):
-    nums = [random.randint(1, 9) for _ in range(n)]
+def make_file(n, nums=None):
+    if nums is None:
+        nums = [random.randint(1, 9) for _ in range(n)]
+    else:
+        if len(nums) != n:
+            raise ValueError(f"n ({n}) and len(nums) ({len(nums)}) mismatch")
+
     filename = f"{n}({','.join(map(str, nums))}).txt"
-    with open(f"bench/inputs/{filename}", "w") as f:
+
+    with open(input_dir / filename, "w") as f:
         f.write(str(n) + "\n")
-        f.write(" ".join(map(str, nums)))
+        f.write(" ".join(map(str, nums)) + "\n")
+
+
+if __name__ == "__main__":
+    make_file(6)
+    
+    make_file(6, [1, 2, 3, 4, 5, 6])

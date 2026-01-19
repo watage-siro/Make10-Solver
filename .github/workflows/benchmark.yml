@@ -29,11 +29,7 @@ jobs:
           echo "n,nums,call,opc,eval,time" > results.csv
           for f in bench/inputs/*.txt; do
             if [ -e "$f" ]; then
-              nums=$(tr '\n' ' ' < "$f")
-              n=$(echo "$nums" | awk '{print $1}')
-              list=$(echo "$nums" | awk '{for(i=2;i<=NF;i++) printf (i==2?"%s":",%s"), $i}')
-              out=$(echo "$nums" | ./make10)
-              echo "$n,\"($list)\",$out" >> results.csv
+              ./make10 < "$f" >> results.csv
             fi
           done
 

@@ -10,9 +10,10 @@ int main(void) {
     // Runs in seconds up to n = 6.
     
     //-----------------------------------------
-    int n; cin >> n;
+    int n; std::cin >> n;
 	std::vector<int> nums(n);
-	for(auto& a: nums) cin >> a;
+	for(auto& a: nums) std::cin >> a;
+	int target = 10;
     //-----------------------------------------
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -21,7 +22,7 @@ int main(void) {
     
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-	for(auto& a : res) cout << a << " ";
+	for(auto& a : res) std::cout << a << " ";
     std::cout << std::fixed << std::setprecision(3);
     std::cout << elapsed.count() << "\n";
     return 0;

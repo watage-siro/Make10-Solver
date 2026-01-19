@@ -1,12 +1,14 @@
-import random, os
+import random
+from pathlib import Path
 
-random.seed(1234)
-os.makedirs("bench/inputs", exist_ok=True)
+Path("bench/inputs").mkdir(parents=True, exist_ok=True)
 
-CASE_NUM = 20
-N = 6
+n = 6
 
-for idx in range(1, CASE_NUM + 1):
-    nums = [random.randint(1, 9) for _ in range(N)]
-    with open(f"bench/inputs/input{idx}.txt", "w") as f:
-        f.write(" ".join(map(str, nums)))
+for n in range(2, 9):
+    for _ in range(10):
+        nums = [random.randint(1, 9) for _ in range(n)]
+        filename = f"{n}({','.join(map(str, nums))}).txt"
+        with open(f"bench/inputs/{filename}", "w") as f:
+            f.write(str(n) + "\n")
+            f.write(" ".join(map(str, nums)))

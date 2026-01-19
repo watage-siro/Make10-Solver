@@ -21,7 +21,7 @@ jobs:
 
     - name: Build
       run: |
-        g++ -O2 -std=c++17 -o make10 main.cpp
+        g++ -O2 -std=gnu++17 -o make10 main.cpp
 
     - name: Run benchmark on generated inputs
       run: |

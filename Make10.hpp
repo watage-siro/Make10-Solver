@@ -313,7 +313,7 @@ public:
         return res;
     }
 
-    std::vector<int> benchmark(int x = 10) {
+    std::vector<long long> benchmark(int x = 10) {
         call = 0,opc = 0,eval = 0;
         bench = true;
         solve(x);

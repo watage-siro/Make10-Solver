@@ -226,13 +226,15 @@ private:
                    std::unordered_set<StateKey, StateKey::Hasher>& seen,
                    Emit&& emit,
                    int rpn_i = 0, int val_i = 0) {
-        if(bench) ++call;
         if (rpn_i == (int)rpn.size()) {
-			if(val_st.size() == 1 && bench) ++eval;
+			if(bench) {
+				++call;
+				++eval;
+			}
             if (val_st.size() == 1 && val_st.back() == target) {
-                //if (seen.insert(StateKey(fml_st.back())).second) {
+                if (seen.insert(StateKey(fml_st.back())).second) {
                     emit(fml_st.back());
-                //}
+                }
             }
             return;
         }
@@ -244,6 +246,7 @@ private:
             fml_st.pop_back();
             val_st.pop_back();
         } else {
+			if(bench) ++call;
             if (val_st.size() < 2) return;
             frac b = val_st.back(); val_st.pop_back();
             frac a = val_st.back(); val_st.pop_back();

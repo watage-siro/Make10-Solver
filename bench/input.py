@@ -21,6 +21,6 @@ def make_file(n, nums=None):
 
 
 if __name__ == "__main__":
+    make_file(4, [1, 2, 3, 4])
+    make_file(5, [1, 2, 3, 4, 5])
     make_file(6, [1, 2, 3, 4, 5, 6])
-    make_file(7, [1, 2, 3, 4, 5, 6, 7])
-    make_file(8, [1, 2, 3, 4, 5, 6, 7, 8])

@@ -190,7 +190,7 @@ private:
     std::vector<int> A;
     std::vector<op> ops;
     bool bench;
-    int call, opc, eval;
+    uint64_t call, opc, eval;
 
     frac calc(const frac& a, const frac& b, const op& o) {
         switch (o.name) {
@@ -313,12 +313,12 @@ public:
         return res;
     }
 
-    std::vector<long long> benchmark(int x = 10) {
+    std::vector<uint64_t> benchmark(int x = 10) {
         call = 0,opc = 0,eval = 0;
         bench = true;
         solve(x);
         bench = false;
-        std::vector<long long> res = {call, opc, eval};
+        std::vector<uint64_t> res = {call, opc, eval};
         return res;
     }
 };

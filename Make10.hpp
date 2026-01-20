@@ -318,7 +318,7 @@ public:
         bench = true;
         solve(x);
         bench = false;
-        std::vector<int> res = {call, opc, eval};
+        std::vector<long long> res = {call, opc, eval};
         return res;
     }
 };

@@ -254,10 +254,10 @@ private:
             fml a_fml = fml_st.back(); fml_st.pop_back();
 
             for (const op& o : ops) {
-                //if ((o.name == tkn::ADD || o.name == tkn::MUL) && a > b) continue;
+                if ((o.name == tkn::ADD || o.name == tkn::MUL) && a > b) continue;
                 frac c = calc(a, b, o);
                 if(bench) ++opc;
-                //if (!c.valid) continue;
+                if (!c.valid) continue;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);
                 solve_ops(rpn, current_A, target, val_st, fml_st, seen, emit, rpn_i + 1, val_i);

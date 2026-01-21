@@ -254,8 +254,11 @@ private:
             fml a_fml = fml_st.back(); fml_st.pop_back();
 
             for (const op& o : ops) {
+				
                 if ((o.name == tkn::ADD || o.name == tkn::MUL) && a > b) continue;
 				if(o.name == tkn::DIV && b.num == b.den) continue;
+				if(o.name == tkn::SUB && b.num == 0) continue;
+				
                 frac c = calc(a, b, o);
                 if(bench) ++opc;
                 if (!c.valid) continue;

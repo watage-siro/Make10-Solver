@@ -231,17 +231,13 @@ private:
     template<class Emit>
     void solve_ops(const std::vector<char>& rpn, const std::vector<int>& current_A, const frac& target,
                    std::vector<frac>& val_st, std::vector<fml>& fml_st,
-                   std::unordered_set<StateKey, StateKey::Hasher>& seen,
                    Emit&& emit,
                    int rpn_i = 0, int val_i = 0) {
-        //if(bench) ++call;
         if (rpn_i == (int)rpn.size()) {
             if(bench) ++eval;
 			val_st.back().approx();
             if (val_st.size() == 1 && val_st.back() == target) {
-                if (seen.insert(StateKey(fml_st.back())).second) {
-                    emit(fml_st.back());
-                }
+                emit(fml_st.back());
             }
             return;
         }
@@ -249,7 +245,7 @@ private:
         if (rpn[rpn_i] == 'V') {
             val_st.push_back(frac(current_A[val_i]));
             fml_st.push_back(fml(static_cast<tkn>(val_i)));
-            solve_ops(rpn, current_A, target, val_st, fml_st, seen, emit, rpn_i + 1, val_i + 1);
+            solve_ops(rpn, current_A, target, val_st, fml_st, emit, rpn_i + 1, val_i + 1);
             fml_st.pop_back();
             val_st.pop_back();
         } else {
@@ -266,7 +262,7 @@ private:
                 if(bench) ++opc;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);
-                solve_ops(rpn, current_A, target, val_st, fml_st, seen, emit, rpn_i + 1, val_i);
+                solve_ops(rpn, current_A, target, val_st, fml_st, emit, rpn_i + 1, val_i);
                 fml_st.pop_back();
                 val_st.pop_back();
             }
@@ -297,9 +293,8 @@ private:
             for (auto& rpn : RPN) {
                 std::vector<frac> val_st;
                 std::vector<fml> fml_st;
-                std::unordered_set<StateKey, StateKey::Hasher> seen;
                 
-                solve_ops(rpn, A, target, val_st, fml_st, seen, emit);
+                solve_ops(rpn, A, target, val_st, fml_st, emit);
             }
         } while (std::next_permutation(A.begin(), A.end()));
         

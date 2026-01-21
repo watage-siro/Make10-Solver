@@ -42,8 +42,8 @@ private:
                 return;
             }
             if (d < 0) { n = -n; d = -d; }
+            if (n == 0) { num = 0; den = 1; return;}
             num = n; den = d;
-            approx();
         }
 
         static frac inv(const frac& val) {
@@ -54,7 +54,7 @@ private:
         friend frac operator+(const frac& a, const frac& b) {
             if (!a.valid || !b.valid) return frac::invalid();
             frac res((__int128_t)a.num * b.den + (__int128_t)b.num * a.den, (__int128_t)a.den * b.den);
-            res.approx();
+            //res.approx();
             return res;
         }
 
@@ -68,7 +68,7 @@ private:
         friend frac operator*(const frac& a, const frac& b) {
             if (!a.valid || !b.valid) return frac::invalid();
             frac res((__int128_t)a.num * b.num, (__int128_t)a.den * b.den);
-            res.approx();
+            //res.approx();
             return res;
         }
 
@@ -170,7 +170,7 @@ private:
         uint8_t len;
         long long num, den;
 
-        StateKey(const fml& f, const frac& val = frac(0,1)) : fml_data(f.cul), len(f.len), num(val.num), den(val.den) {}
+        StateKey(const fml& f, const frac& val = frac()) : fml_data(f.cul), len(f.len), num(val.num), den(val.den) {}
 
         bool operator==(const StateKey& other) const {
             return fml_data == other.fml_data && len == other.len && num == other.num && den == other.den;
@@ -194,10 +194,18 @@ private:
 
     frac calc(const frac& a, const frac& b, const op& o) {
         switch (o.name) {
-            case tkn::ADD: return a + b;
-            case tkn::SUB: return a - b;
-            case tkn::MUL: return a * b;
-            case tkn::DIV: return a / b;
+            case tkn::ADD:
+                if(a > b) return frac::invalid();
+                else return a + b;
+            case tkn::SUB:
+                if(b.den == 0) return frac::invalid();
+                else return a - b;
+            case tkn::MUL:
+                if(a > b) return frac::invalid();
+                else return a * b; 
+            case tkn::DIV:
+                if(b.num == b.den) return frac::invalid();
+                else return a / b;
             default: return frac::invalid();
         }
     }
@@ -219,18 +227,17 @@ private:
             cur.pop_back();
         }
     }
-
+    
     template<class Emit>
     void solve_ops(const std::vector<char>& rpn, const std::vector<int>& current_A, const frac& target,
                    std::vector<frac>& val_st, std::vector<fml>& fml_st,
                    std::unordered_set<StateKey, StateKey::Hasher>& seen,
                    Emit&& emit,
                    int rpn_i = 0, int val_i = 0) {
+        //if(bench) ++call;
         if (rpn_i == (int)rpn.size()) {
-			if(bench) {
-				++call;
-				++eval;
-			}
+            if(bench) ++eval;
+            if(bench) ++call;
             if (val_st.size() == 1 && val_st.back() == target) {
                 if (seen.insert(StateKey(fml_st.back())).second) {
                     emit(fml_st.back());
@@ -238,7 +245,7 @@ private:
             }
             return;
         }
-
+        
         if (rpn[rpn_i] == 'V') {
             val_st.push_back(frac(current_A[val_i]));
             fml_st.push_back(fml(static_cast<tkn>(val_i)));
@@ -246,22 +253,17 @@ private:
             fml_st.pop_back();
             val_st.pop_back();
         } else {
-			if(bench) ++call;
+            if(bench) ++call;
             if (val_st.size() < 2) return;
             frac b = val_st.back(); val_st.pop_back();
             frac a = val_st.back(); val_st.pop_back();
             fml b_fml = fml_st.back(); fml_st.pop_back();
             fml a_fml = fml_st.back(); fml_st.pop_back();
-
+            
             for (const op& o : ops) {
-				
-                if ((o.name == tkn::ADD || o.name == tkn::MUL) && a > b) continue;
-				if(o.name == tkn::DIV && b.num == b.den) continue;
-				if(o.name == tkn::SUB && b.num == 0) continue;
-				
                 frac c = calc(a, b, o);
-                if(bench) ++opc;
                 if (!c.valid) continue;
+                if(bench) ++opc;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);
                 solve_ops(rpn, current_A, target, val_st, fml_st, seen, emit, rpn_i + 1, val_i);
@@ -290,7 +292,7 @@ private:
             *out++ = f.build_string(A);
             ++cnt;
         };
-    
+        
         do {
             for (auto& rpn : RPN) {
                 std::vector<frac> val_st;
@@ -316,6 +318,7 @@ public:
         std::sort(res.begin(), res.end(), [](const std::string& a, const std::string& b) {
             return a.size() != b.size() ? a.size() < b.size() : a < b;
         });
+        
         res.erase(std::unique(res.begin(), res.end()), res.end());
         return res;
     }
@@ -325,7 +328,7 @@ public:
         bench = true;
         solve(x);
         bench = false;
-        std::vector<uint64_t> res = {call, opc, eval};
+        std::vector<uint64_t> res = {call, opc, eval}; 
         return res;
     }
 };

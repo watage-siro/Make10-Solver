@@ -237,7 +237,7 @@ private:
         //if(bench) ++call;
         if (rpn_i == (int)rpn.size()) {
             if(bench) ++eval;
-            if(bench) ++call;
+			val_st.back().approx();
             if (val_st.size() == 1 && val_st.back() == target) {
                 if (seen.insert(StateKey(fml_st.back())).second) {
                     emit(fml_st.back());
@@ -328,6 +328,7 @@ public:
         bench = true;
         solve(x);
         bench = false;
+		call += eval;
         std::vector<uint64_t> res = {call, opc, eval}; 
         return res;
     }

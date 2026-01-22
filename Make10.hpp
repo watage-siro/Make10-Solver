@@ -176,17 +176,6 @@ private:
             return fml_data == other.fml_data && len == other.len && num == other.num && den == other.den;
         }
 
-        struct Hasher {
-            size_t operator()(const StateKey& k) const {
-                size_t h = std::hash<uint64_t>{}(k.fml_data);
-                h ^= std::hash<int>{}(k.len) + 0x9e3779b9 + (h << 6) + (h >> 2);
-                h ^= std::hash<long long>{}(k.num) + 0x9e3779b9 + (h << 6) + (h >> 2);
-                h ^= std::hash<long long>{}(k.den) + 0x9e3779b9 + (h << 6) + (h >> 2);
-                return h;
-            }
-        };
-    };
-
     std::vector<int> A;
     std::vector<op> ops;
     bool bench;
@@ -258,7 +247,7 @@ private:
             
             for (const op& o : ops) {
                 frac c = calc(a, b, o);
-                if (!c.valid) continue;
+                //if (!c.valid) continue;
                 if(bench) ++opc;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);

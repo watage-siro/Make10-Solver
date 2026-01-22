@@ -165,17 +165,6 @@ private:
         }
     };
 
-    struct StateKey {
-        uint64_t fml_data;
-        uint8_t len;
-        long long num, den;
-
-        StateKey(const fml& f, const frac& val = frac()) : fml_data(f.cul), len(f.len), num(val.num), den(val.den) {}
-
-        bool operator==(const StateKey& other) const {
-            return fml_data == other.fml_data && len == other.len && num == other.num && den == other.den;
-        }
-
     std::vector<int> A;
     std::vector<op> ops;
     bool bench;

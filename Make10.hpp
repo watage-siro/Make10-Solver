@@ -236,7 +236,7 @@ private:
             
             for (const op& o : ops) {
                 frac c = calc(a, b, o);
-                //if (!c.valid) continue;
+                if (!c.valid) continue;
                 if(bench) ++opc;
                 fml c_fml = fml::merge(a_fml, b_fml, o);
                 val_st.push_back(c); fml_st.push_back(c_fml);

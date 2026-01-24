@@ -197,7 +197,8 @@ private:
 }
 
     inline bool merge_node(const node& a, const node& b, const op& o, node& nn) {
-        nn.v = calc(a.v, b.v, o);
+        if(bench) ++ops;
+		nn.v = calc(a.v, b.v, o);
         if(!nn.v.valid) return false;
         
         nn.f = merge_fml(a.f, b.f, o);

@@ -5,12 +5,18 @@
 #include <stack>
 #include <algorithm>
 #include <numeric>
-#include <unordered_set>
 #include <cstdint>
 #include <cmath>
 
+inline constexpr long long APP_LINE = (long long)1e15;
+
 class Make10 {
 private:
+    enum class tkn : uint8_t {
+        v0, v1, v2, v3, v4, v5, v6, v7,
+        ADD, SUB, MUL, DIV
+    };
+    
     struct frac {
         long long num;
         long long den;
@@ -21,7 +27,7 @@ private:
             x.valid = false;
             return x;
         }
-
+        
         void approx() {
             if (!valid) return;
             if (num == 0) {
@@ -35,7 +41,7 @@ private:
             long long g = std::gcd(std::llabs(num), den);
             num /= g; den /= g;
         }
-
+        
         frac(long long n = 0, long long d = 1) : valid(true) {
             if (d == 0) {
                 valid = false;
@@ -45,149 +51,203 @@ private:
             if (n == 0) { num = 0; den = 1; return;}
             num = n; den = d;
         }
-
+        
         static frac inv(const frac& val) {
             if (!val.valid || val.num == 0) return frac::invalid();
             return frac(val.den, val.num);
         }
 
-        friend frac operator+(const frac& a, const frac& b) {
-            if (!a.valid || !b.valid) return frac::invalid();
-            frac res((__int128_t)a.num * b.den + (__int128_t)b.num * a.den, (__int128_t)a.den * b.den);
-            //res.approx();
+        frac operator+(const frac& other) const{
+            if (!this->valid || !other.valid) return frac::invalid();
+            frac res((__int128_t)this->num * other.den + (__int128_t)other.num * this->den, (__int128_t)this->den * other.den);
+            if(res.num >= APP_LINE || -res.num >= APP_LINE || res.den >= APP_LINE) res.approx();
             return res;
         }
 
-        friend frac operator-(const frac& a) {
-            if (!a.valid) return frac::invalid();
-            return frac(-(a.num), a.den);
+        frac operator-() const{
+            if (!this->valid) return frac::invalid();
+            return frac(-(this->num), this->den);
         }
 
-        friend frac operator-(const frac& a, const frac& b) { return a + (-b); }
+        frac operator-(const frac& other) const { return (*this) + (-other); }
 
-        friend frac operator*(const frac& a, const frac& b) {
-            if (!a.valid || !b.valid) return frac::invalid();
-            frac res((__int128_t)a.num * b.num, (__int128_t)a.den * b.den);
-            //res.approx();
+        frac operator*(const frac& other) const {
+            if (!this->valid || !other.valid) return frac::invalid();
+            frac res((__int128_t)this->num * other.num, (__int128_t)this->den * other.den);
+            if(res.num >= APP_LINE || -res.num >= APP_LINE || res.den >= APP_LINE) res.approx();
             return res;
         }
 
-        friend frac operator/(const frac& a, const frac& b) {
-            if (!a.valid || !b.valid || b.num == 0) return frac::invalid();
-            return a * frac::inv(b);
+        frac operator/(const frac& other) const {
+            if (!this->valid || !other.valid || other.num == 0) return frac::invalid();
+            return (*this) * frac::inv(other);
         }
 
-        friend bool operator==(const frac& a, const frac& b) {
-            if (!a.valid || !b.valid) return false;
-            return a.num == b.num && a.den == b.den;
+        bool operator==(const frac& other) const {
+            if (!this->valid || !other.valid) return false;
+            return this->num == other.num && this->den == other.den;
         }
 
-        friend bool operator>(const frac& a, const frac& b) {
-            if (!a.valid || !b.valid) return false;
-            return (__int128_t)a.num * b.den > (__int128_t)b.num * a.den;
+        bool operator>(const frac& other) const {
+            if (!this->valid || !other.valid) return false;
+            return (__int128_t)this->num * other.den > (__int128_t)other.num * this->den;
         }
     };
-
-    enum class tkn : uint8_t {
-        v0, v1, v2, v3, v4, v5, v6, v7,
-        ADD, SUB, MUL, DIV
-    };
-
-    struct op { tkn name; };
-
+    
     struct fml {
-        uint64_t cul = 0;
-        uint8_t len = 0;
-
+        uint64_t cul;
+        uint8_t len;
+        uint8_t min_idx;
+        
         fml() = default;
-        fml(tkn v) : cul(static_cast<uint64_t>(v)), len(1) {}
-        fml(uint64_t cul_, uint8_t len_) : cul(cul_), len(len_) {}
-
-        static fml merge(const fml& a, const fml& b, const op& o) {
-            uint64_t data = a.cul;
-            data |= (b.cul << (a.len * 4));
-            data |= (uint64_t)o.name << ((a.len + b.len) * 4);
-            return fml(data, a.len + b.len + 1);
+        fml(tkn v) : cul(static_cast<uint64_t>(v)), len(1), min_idx(static_cast<uint8_t>(v)) {}
+        fml(uint64_t cul_, uint8_t len_, uint8_t min_idx_) : cul(cul_), len(len_), min_idx(min_idx_) {}
+        
+    };
+    
+    struct op {
+        tkn name;
+        std::string s;
+        int priority;
+        bool commutative;
+    };
+    
+    struct sig {
+        uint64_t pn = 0;
+        uint64_t ar = 0;
+        uint8_t len = 0;
+        uint64_t last_op_pn = 0;
+        bool valid = false;
+        
+        sig() = default;
+        sig(int id) : pn((uint64_t)id), ar(0), len(1), valid(true) {}
+        
+        static sig invalid() { return sig(); }
+        
+        tkn root() const {
+            return static_cast<tkn>(pn & 0xF);
         }
-
-        static inline bool is_value(tkn t) { return t <= tkn::v7; }
-
-        static std::string tkn2str(tkn t, const std::vector<int>& A) {
-            if (is_value(t)) return std::to_string(A[static_cast<size_t>(t)]);
-            switch (t) {
-                case tkn::ADD: return "+";
-                case tkn::SUB: return "-";
-                case tkn::MUL: return "*";
-                case tkn::DIV: return "/";
-                default: return "";
-            }
-        }
-
-        static inline int get_priority(tkn t) {
-            if (is_value(t)) return 100;
-            if (t == tkn::MUL || t == tkn::DIV) return 2;
-            if (t == tkn::ADD || t == tkn::SUB) return 1;
-            return 0;
-        }
-
-        std::string build_string(const std::vector<int>& A) const {
-            if (cul == 0 && len == 0) return "";
-            struct Node {
-                std::string s;
-                tkn op;
-                Node(tkn t, const std::vector<int>& val_A) : op(t) {
-                    s = std::to_string(val_A[static_cast<int>(op)]);
-                }
-                Node(std::string str, tkn t) : s(std::move(str)), op(t) {}
-            };
-
-            std::stack<Node> st;
-            uint64_t data = cul;
-            for (uint8_t i = 0; i < len; ++i) {
-                tkn t = static_cast<tkn>(data & 0xF);
-                data >>= 4;
-
-                if (is_value(t)) {
-                    st.push(Node(t, A));
-                } else {
-                    if (st.size() < 2) return "";
-                    Node b = st.top(); st.pop();
-                    Node a = st.top(); st.pop();
-
-                    int ap = get_priority(a.op), bp = get_priority(b.op), tp = get_priority(t);
-                    if (ap < tp) a.s = "(" + a.s + ")";
-                    if (bp < tp || (bp == tp && (t == tkn::SUB || t == tkn::DIV))) b.s = "(" + b.s + ")";
-                    
-                    st.push(Node(a.s + tkn2str(t, A) + b.s, t));
-                }
-            }
-            return (st.size() == 1 ? st.top().s : "");
+        
+        bool operator>(const sig& other) const {
+            if(this->pn != other.pn) return this->pn > other.pn;
+            if(this->len != other.len) return this->len > other.len;
+            return this->ar > other.ar;
         }
     };
-
-    std::vector<int> A;
-    std::vector<op> ops;
-    bool bench;
-    uint64_t call, opc, eval;
-
-    frac calc(const frac& a, const frac& b, const op& o) {
+    
+    struct node {
+        frac v;
+        fml f;
+        sig s;
+        
+        node() = default;
+        node(const frac& v_, const fml& f_, const sig& s_) : v(v_), f(f_), s(s_) {}
+    };
+    
+    inline frac calc(const frac& a, const frac& b, const op& o) {
         switch (o.name) {
             case tkn::ADD:
-                if(a > b) return frac::invalid();
-                else return a + b;
+                return a + b;
             case tkn::SUB:
-                if(b.den == 0) return frac::invalid();
-                else return a - b;
+                if(b.num == 0) return frac::invalid();
+                return a - b;
             case tkn::MUL:
-                if(a > b) return frac::invalid();
-                else return a * b; 
+                return a * b; 
             case tkn::DIV:
                 if(b.num == b.den) return frac::invalid();
-                else return a / b;
+                return a / b;
             default: return frac::invalid();
         }
     }
+    
+    inline fml merge_fml(const fml& a, const fml& b, const op& o) {
+        uint64_t data = a.cul;
+        data |= (b.cul << (a.len * 4));
+        data |= (uint64_t)o.name << ((a.len + b.len) * 4);
+        return fml(data, a.len + b.len + 1, std::min(a.min_idx, b.min_idx));
+    }
 
+    inline sig merge_sig(const sig& a, const sig& b, const op& o) {
+        if (!a.valid || !b.valid) return sig::invalid();
+        
+        if (!is_value(b.root())) {
+            const op& b_op = tkn2op(b.root());
+            if (b_op.priority == o.priority) return sig::invalid();
+        }
+        
+    if (o.commutative) {
+        const uint64_t Acomp_pn = (a.root() == o.name) ? a.last_op_pn : a.pn;
+        if (Acomp_pn > b.pn) return sig::invalid();
+    }
+
+    sig s;
+    s.valid = true;
+    s.len = 1 + a.len + b.len;
+    s.last_op_pn = b.pn;
+
+    s.pn = static_cast<uint64_t>(o.name);
+    s.pn |= (a.pn << 4);
+    s.pn |= (b.pn << (4 * (1 + a.len)));
+
+    s.ar = 2;
+    s.ar |= (a.ar << 4);
+    s.ar |= (b.ar << (4 * (1 + a.len)));
+
+    return s;
+}
+
+    inline bool merge_node(const node& a, const node& b, const op& o, node& nn) {
+        nn.v = calc(a.v, b.v, o);
+        if(!nn.v.valid) return false;
+        
+        nn.f = merge_fml(a.f, b.f, o);
+        
+        nn.s = merge_sig(a.s, b.s, o);
+        if(!nn.s.valid) return false;
+        
+        return true;
+    }
+    
+    inline bool is_value(const tkn t) const { return t < tkn::ADD; }
+    
+    inline op tkn2op(const tkn t) const { return ops[static_cast<size_t>(t) - static_cast<size_t>(tkn::ADD)]; }
+    
+    std::string build_string(const fml& f, const std::vector<int>& A) const {
+            if (f.cul == 0 && f.len == 0) return "";
+            
+            std::stack<std::pair<std::string,int>> st;
+            uint64_t data = f.cul;
+            for (uint8_t i = 0; i < f.len; ++i) {
+                tkn t = static_cast<tkn>(data & 0xF);
+                data >>= 4;
+                
+                if (is_value(t)) st.push({std::to_string(A[static_cast<size_t>(t)]), 100});
+                else {
+                    if (st.size() < 2) return "";
+                    auto [bs, bp] = st.top(); st.pop();
+                    auto [as, ap] = st.top(); st.pop();
+
+                    const op& t_op = tkn2op(t);
+                    if(ap < t_op.priority)  as = "(" + as + ")";
+                    if(t_op.priority > bp || (!t_op.commutative && t_op.priority == bp)) bs = "(" + bs + ")";
+                    st.push({as + t_op.s + bs, t_op.priority});
+                }
+            }
+            return (st.size() == 1 ? st.top().first : "");
+        }
+    
+    
+    std::vector<int> A;
+    bool bench;
+    uint64_t call, opc, eval;
+    inline static const op ops[4] = {
+        {tkn::ADD, "+", 1, true},
+        {tkn::SUB, "-", 1, false},
+        {tkn::MUL, "*", 2, true},
+        {tkn::DIV, "/", 2, false}
+    };
+
+    
     void genRPN(std::vector<std::vector<char>>& RPN, std::vector<char>& cur, int val_cnt = 0, int op_cnt = 0) {
         int n = static_cast<int>(A.size());
         if (val_cnt == n && op_cnt == n - 1) {
@@ -207,45 +267,39 @@ private:
     }
     
     template<class Emit>
-    void solve_ops(const std::vector<char>& rpn, const std::vector<int>& current_A, const frac& target,
-                   std::vector<frac>& val_st, std::vector<fml>& fml_st,
-                   Emit&& emit,
+    void solve_ops(const std::vector<char>& rpn, const std::vector<int>& A, const frac& target,
+                   std::stack<node>& st,
+                   Emit&& emit, const std::vector<int>& ID,
                    int rpn_i = 0, int val_i = 0) {
+        
         if (rpn_i == (int)rpn.size()) {
             if(bench) ++eval;
-			val_st.back().approx();
-            if (val_st.size() == 1 && val_st.back() == target) {
-                emit(fml_st.back());
-            }
+			st.top().v.approx();
+            if (st.size() == 1 && st.top().v == target) emit(st.top().f);
             return;
         }
         
         if (rpn[rpn_i] == 'V') {
-            val_st.push_back(frac(current_A[val_i]));
-            fml_st.push_back(fml(static_cast<tkn>(val_i)));
-            solve_ops(rpn, current_A, target, val_st, fml_st, emit, rpn_i + 1, val_i + 1);
-            fml_st.pop_back();
-            val_st.pop_back();
+            st.push(node(frac(A[ID[val_i]]), fml(static_cast<tkn>(ID[val_i])), sig(ID[val_i])));
+            
+            solve_ops(rpn, A, target, st, emit, ID, rpn_i + 1, val_i + 1);
+            
+            st.pop();
         } else {
             if(bench) ++call;
-            if (val_st.size() < 2) return;
-            frac b = val_st.back(); val_st.pop_back();
-            frac a = val_st.back(); val_st.pop_back();
-            fml b_fml = fml_st.back(); fml_st.pop_back();
-            fml a_fml = fml_st.back(); fml_st.pop_back();
+            if (st.size() < 2) return;
+            node r = st.top(); st.pop();
+            node l = st.top(); st.pop();
             
             for (const op& o : ops) {
-                frac c = calc(a, b, o);
-                if (!c.valid) continue;
-                if(bench) ++opc;
-                fml c_fml = fml::merge(a_fml, b_fml, o);
-                val_st.push_back(c); fml_st.push_back(c_fml);
-                solve_ops(rpn, current_A, target, val_st, fml_st, emit, rpn_i + 1, val_i);
-                fml_st.pop_back();
-                val_st.pop_back();
+                node nn;
+                if(!merge_node(l, r, o, nn)) continue;
+                
+                st.push(nn);
+                solve_ops(rpn, A, target, st, emit, ID, rpn_i + 1, val_i);
+                st.pop();
             }
-            fml_st.push_back(a_fml); fml_st.push_back(b_fml);
-            val_st.push_back(a); val_st.push_back(b);
+            st.push(l); st.push(r);
         }
     }
     
@@ -263,36 +317,37 @@ private:
     
         size_t cnt = 0;
         auto emit = [&](const fml& f) {
-            *out++ = f.build_string(A);
+            *out++ = build_string(f, A);
             ++cnt;
         };
         
+        std::vector<int> ID(A.size());
+        std::iota(ID.begin(), ID.end(), 0);
         do {
             for (auto& rpn : RPN) {
-                std::vector<frac> val_st;
-                std::vector<fml> fml_st;
+                std::stack<node> st;
                 
-                solve_ops(rpn, A, target, val_st, fml_st, emit);
+                solve_ops(rpn, A, target, st, emit, ID);
             }
-        } while (std::next_permutation(A.begin(), A.end()));
+        } while (std::next_permutation(ID.begin(), ID.end()));
         
     return cnt;
 }
 
 public:
-    explicit Make10(const std::vector<int>& vec) : A(vec) , bench(false) {
-        ops = { {tkn::ADD}, {tkn::SUB}, {tkn::MUL}, {tkn::DIV} };
-    }
+    explicit Make10(const std::vector<int>& vec) : A(vec) , bench(false) {}
 
     std::vector<std::string> solve(int x = 10) {
         std::vector<std::string> res;
         solve(x, std::back_inserter(res));
+        
         
         std::sort(res.begin(), res.end(), [](const std::string& a, const std::string& b) {
             return a.size() != b.size() ? a.size() < b.size() : a < b;
         });
         
         res.erase(std::unique(res.begin(), res.end()), res.end());
+        
         return res;
     }
 
